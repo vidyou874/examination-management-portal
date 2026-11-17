@@ -212,5 +212,3 @@ In accordance with Section 12 of the Examination Management Portal Product Requi
   - Formulating transactional queries for capacity checking and duplicate booking prevention.
 * **Student Understanding:** All architectural decisions, SQLite transactions, role-based decorators, weighted rubric calculations, and business rules were thoroughly reviewed, tested, and validated to ensure complete understanding and readiness for defense during the viva examination.
 =======
-# examination-management-portal
->>>>>>> 85871994136ab4f7cb11579c886981d7a4adcdaf
