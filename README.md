@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Examination Management Portal (EMP)
 
 An enterprise-grade, role-based academic examination management web application developed with **Python Flask**, **SQLite**, **Jinja2**, and **Bootstrap 5**. EMP streamlines examination scheduling, faculty slot assignment, duplicate-proof student booking, rubric-based evaluation, result publication, and audit tracking.
