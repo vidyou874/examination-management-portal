@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+{% block title %}Administrator Dashboard{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold mb-0">Administrator Overview</h2>
+        <p class="text-muted small mb-0">System metrics, examinations pipeline, pending verifications, and audit trails</p>
+    </div>
+    <div class="btn-group">
+        <a href="{{ url_for('admin.examinations') }}" class="btn btn-primary btn-sm"><i class="bi bi-plus-circle me-1"></i> New Exam</a>
+        <a href="{{ url_for('admin.courses') }}" class="btn btn-outline-primary btn-sm"><i class="bi bi-book me-1"></i> New Course</a>
+    </div>
+</div>
+
+<!-- Stat Cards Row -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card d-flex align-items-center">
+            <div class="stat-icon bg-primary bg-opacity-10 text-primary me-3">
+                <i class="bi bi-book"></i>
+            </div>
+            <div>
+                <span class="text-muted small">Total Courses</span>
+                <h4 class="fw-bold mb-0">{{ stats.total_courses }}</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card d-flex align-items-center">
+            <div class="stat-icon bg-info bg-opacity-10 text-info me-3">
+                <i class="bi bi-journal-check"></i>
+            </div>
+            <div>
+                <span class="text-muted small">Examinations</span>
+                <h4 class="fw-bold mb-0">{{ stats.total_exams }}</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card d-flex align-items-center">
+            <div class="stat-icon bg-warning bg-opacity-10 text-warning me-3">
+                <i class="bi bi-person-exclamation"></i>
+            </div>
+            <div>
+                <span class="text-muted small">Pending Examiners</span>
+                <h4 class="fw-bold mb-0 text-warning">{{ stats.pending_examiners }}</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card d-flex align-items-center">
+            <div class="stat-icon bg-success bg-opacity-10 text-success me-3">
+                <i class="bi bi-ticket-perforated"></i>
+            </div>
+            <div>
+                <span class="text-muted small">Active Bookings</span>
+                <h4 class="fw-bold mb-0">{{ stats.active_bookings }}</h4>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <!-- Pending Examiner Approvals -->
+    <div class="col-lg-6">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                <h5 class="fw-bold mb-0"><i class="bi bi-person-badge text-warning me-2"></i> Pending Faculty Approvals</h5>
+                <a href="{{ url_for('admin.examiners', status='pending') }}" class="btn btn-outline-warning btn-sm">View All ({{ stats.pending_examiners }})</a>
+            </div>
+            <div class="card-body p-0">
+                {% if pending_examiners %}
+                <div class="table-responsive">
+                    <table class="table table-hover table-emp align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Name / ID</th>
+                                <th>Dept & Designation</th>
+                                <th class="text-end">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ex in pending_examiners %}
+                            <tr>
+                                <td>
+                                    <div class="fw-bold">{{ ex.full_name }}</div>
+                                    <small class="text-muted">{{ ex.employee_id }} &bull; {{ ex.email }}</small>
+                                </td>
+                                <td>
+                                    <div>{{ ex.department }}</div>
+                                    <small class="text-muted">{{ ex.designation }}</small>
+                                </td>
+                                <td class="text-end">
+                                    <form method="POST" action="{{ url_for('admin.change_examiner_status', user_id=ex.id) }}" class="d-inline">
+                                        <input type="hidden" name="status" value="approved">
+                                        <button type="submit" class="btn btn-success btn-sm"><i class="bi bi-check-lg"></i> Approve</button>
+                                    </form>
+                                    <form method="POST" action="{{ url_for('admin.change_examiner_status', user_id=ex.id) }}" class="d-inline">
+                                        <input type="hidden" name="status" value="rejected">
+                                        <button type="submit" class="btn btn-danger btn-sm"><i class="bi bi-x-lg"></i> Reject</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="p-4 text-center text-muted">
+                    <i class="bi bi-check-circle fs-3 text-success d-block mb-1"></i>
+                    No examiner registrations currently waiting for approval.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Examinations -->
+    <div class="col-lg-6">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                <h5 class="fw-bold mb-0"><i class="bi bi-journal-text text-primary me-2"></i> Recent Examinations</h5>
+                <a href="{{ url_for('admin.examinations') }}" class="btn btn-outline-primary btn-sm">Manage Exams</a>
+            </div>
+            <div class="card-body p-0">
+                {% if recent_exams %}
+                <div class="table-responsive">
+                    <table class="table table-hover table-emp align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Exam Title</th>
+                                <th>Course</th>
+                                <th>Status</th>
+                                <th class="text-end">Details</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ex in recent_exams %}
+                            <tr>
+                                <td>
+                                    <a href="{{ url_for('admin.exam_detail', exam_id=ex.id) }}" class="fw-bold text-decoration-none text-dark">
+                                        {{ ex.title }}
+                                    </a>
+                                    <div class="small text-muted">{{ ex.exam_type }} &bull; {{ ex.max_marks }} Marks</div>
+                                </td>
+                                <td><span class="badge bg-secondary">{{ ex.course_code }}</span></td>
+                                <td>{{ ex.status | status_badge | safe }}</td>
+                                <td class="text-end">
+                                    <a href="{{ url_for('admin.exam_detail', exam_id=ex.id) }}" class="btn btn-sm btn-outline-secondary">
+                                        <i class="bi bi-arrow-right"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="p-4 text-center text-muted">No examinations created yet.</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent System Audit Trail -->
+<div class="card shadow-sm border-0">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+        <h5 class="fw-bold mb-0"><i class="bi bi-shield-check text-info me-2"></i> Recent System Activity Log</h5>
+        <a href="{{ url_for('admin.audit_logs') }}" class="btn btn-outline-secondary btn-sm">Full Audit Trail</a>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-sm table-hover table-emp align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>User</th>
+                        <th>Action</th>
+                        <th>Entity</th>
+                        <th>Details</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in recent_logs %}
+                    <tr>
+                        <td class="small text-muted">{{ log.created_at | datetime_format }}</td>
+                        <td>
+                            {% if log.username %}
+                                <span class="badge bg-light text-dark">{{ log.username }}</span>
+                            {% else %}
+                                <span class="badge bg-secondary">System</span>
+                            {% endif %}
+                        </td>
+                        <td><span class="badge bg-dark">{{ log.action }}</span></td>
+                        <td><code>{{ log.entity_type }} #{{ log.entity_id or '-' }}</code></td>
+                        <td class="small">{{ log.details }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

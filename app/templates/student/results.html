@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}My Examination Results{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold mb-0">Published Examination Results</h2>
+        <p class="text-muted small mb-0">Official academic evaluations, scores, and faculty feedback published by the administration</p>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover table-emp align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Examination Title</th>
+                        <th>Course</th>
+                        <th>Slot Taken</th>
+                        <th>Examiner</th>
+                        <th>Awarded Score</th>
+                        <th>Published Date</th>
+                        <th class="text-end">Breakdown</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in results %}
+                    {% set pct = ((r.total_score / r.exam_max_marks) * 100) | round(1) %}
+                    <tr>
+                        <td>
+                            <div class="fw-bold text-primary">{{ r.exam_title }}</div>
+                            <small class="text-muted">{{ r.exam_type }}</small>
+                        </td>
+                        <td>
+                            <span class="badge bg-secondary">{{ r.course_code }}</span>
+                            <div class="small text-muted">{{ r.course_name }}</div>
+                        </td>
+                        <td>
+                            <div>{{ r.slot_date }}</div>
+                            <small class="text-muted">{{ r.start_time }} - {{ r.end_time }}</small>
+                        </td>
+                        <td>{{ r.examiner_name }}</td>
+                        <td>
+                            <div class="fs-5 fw-bold text-success">{{ r.total_score }} <span class="fs-6 text-muted">/ {{ r.exam_max_marks }}</span></div>
+                            <span class="badge {% if pct >= 50 %}bg-success{% else %}bg-danger{% endif %}">{{ pct }}%</span>
+                        </td>
+                        <td class="small text-muted">{{ r.published_at | datetime_format }}</td>
+                        <td class="text-end">
+                            <a href="{{ url_for('student.result_detail', evaluation_id=r.id) }}" class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-file-earmark-text me-1"></i> View Report
+                            </a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center py-5 text-muted">
+                            <i class="bi bi-award fs-2 text-muted d-block mb-2"></i>
+                            No examination results have been published for your profile yet.
+                            <div class="small mt-1">Results appear here automatically once faculty evaluations are completed and released by the administrator.</div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,121 @@
+/* Examination Management Portal (EMP) Styles */
+:root {
+    --emp-primary: #1e3a8a;
+    --emp-primary-dark: #172554;
+    --emp-accent: #2563eb;
+    --emp-bg: #f8fafc;
+    --emp-card-bg: #ffffff;
+    --emp-border: #e2e8f0;
+    --emp-text: #1e293b;
+    --emp-muted: #64748b;
+}
+
+body {
+    background-color: var(--emp-bg);
+    color: var(--emp-text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+main {
+    flex: 1 0 auto;
+}
+
+footer {
+    flex-shrink: 0;
+    background-color: #ffffff;
+    border-top: 1px solid var(--emp-border);
+}
+
+/* Navbar */
+.navbar-emp {
+    background: linear-gradient(135deg, var(--emp-primary-dark) 0%, var(--emp-primary) 100%);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+}
+
+.navbar-emp .navbar-brand {
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: #ffffff !important;
+}
+
+.navbar-emp .nav-link {
+    color: #cbd5e1 !important;
+    font-weight: 500;
+    transition: color 0.15s ease-in-out;
+}
+
+.navbar-emp .nav-link:hover, .navbar-emp .nav-link.active {
+    color: #ffffff !important;
+}
+
+/* Stat Cards */
+.stat-card {
+    background: var(--emp-card-bg);
+    border: 1px solid var(--emp-border);
+    border-radius: 0.75rem;
+    padding: 1.25rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+}
+
+.stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+/* Tables */
+.table-emp th {
+    background-color: #f1f5f9;
+    color: #334155;
+    font-weight: 600;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid var(--emp-border);
+}
+
+.table-emp td {
+    vertical-align: middle;
+}
+
+/* Rubric evaluation form table */
+.rubric-table th {
+    background-color: #f8fafc;
+}
+
+/* Badges */
+.badge {
+    padding: 0.45em 0.75em;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+}
+
+/* Action button group spacing */
+.table-actions .btn {
+    margin-right: 0.25rem;
+}
+
+/* Responsive container */
+.container-main {
+    max-width: 1200px;
+    margin-top: 1.5rem;
+    margin-bottom: 2.5rem;
+}
+
+/* Timeline card */
+.timeline-card {
+    border-left: 4px solid var(--emp-accent);
+}

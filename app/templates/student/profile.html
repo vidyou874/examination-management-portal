@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Student Profile{% endblock %}
+{% block content %}
+<div class="row justify-content-center my-4">
+    <div class="col-md-7">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3 border-0">
+                <h4 class="fw-bold mb-1"><i class="bi bi-person-circle text-primary me-2"></i> Student Profile</h4>
+                <p class="text-muted small mb-0">View student registration details and update contact information</p>
+            </div>
+            <div class="card-body px-4">
+                <form method="POST" action="{{ url_for('student.profile') }}">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Username</label>
+                            <input type="text" class="form-control" value="{{ student.username }}" disabled>
+                            <small class="text-muted">Username cannot be changed</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Institutional Email</label>
+                            <input type="email" class="form-control" value="{{ student.email }}" disabled>
+                            <small class="text-muted">Managed by administrator</small>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Student ID / Roll No</label>
+                            <input type="text" class="form-control" value="{{ student.student_id_number }}" disabled>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Full Legal Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="full_name" value="{{ student.full_name }}" required>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Department <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="department" value="{{ student.department }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Program / Degree <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="program" value="{{ student.program }}" required>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Contact Phone</label>
+                            <input type="tel" class="form-control" name="phone" value="{{ student.phone or '' }}" placeholder="+91 ...">
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end mt-4">
+                        <button type="submit" class="btn btn-primary px-4">
+                            <i class="bi bi-check-lg me-1"></i> Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

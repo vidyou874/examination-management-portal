@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Examiner Registration{% endblock %}
+{% block content %}
+<div class="row justify-content-center my-4">
+    <div class="col-md-7">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white text-center py-4 border-0">
+                <i class="bi bi-person-badge text-primary display-5 mb-2"></i>
+                <h3 class="fw-bold mb-1">Examiner Faculty Registration</h3>
+                <p class="text-muted small">Register as an evaluator. Requires administrator verification before access is granted.</p>
+            </div>
+            <div class="card-body px-4 py-3">
+                <div class="alert alert-warning py-2 small d-flex align-items-center mb-3">
+                    <i class="bi bi-exclamation-triangle-fill me-2 fs-5"></i>
+                    <span><strong>Policy Note:</strong> New examiner accounts remain in <em>Pending</em> status until verified and activated by the Administrator.</span>
+                </div>
+
+                <form method="POST" action="{{ url_for('auth.register_examiner_route') }}">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="username" class="form-label fw-semibold">Username <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="username" name="username" placeholder="e.g. dr_sharma" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="email" class="form-label fw-semibold">Institutional Email <span class="text-danger">*</span></label>
+                            <input type="email" class="form-control" id="email" name="email" placeholder="e.g. faculty@univ.edu" required>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="password" class="form-label fw-semibold">Password <span class="text-danger">*</span></label>
+                            <input type="password" class="form-control" id="password" name="password" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="confirm_password" class="form-label fw-semibold">Confirm Password <span class="text-danger">*</span></label>
+                            <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="employee_id" class="form-label fw-semibold">Employee ID / Faculty Code <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="employee_id" name="employee_id" placeholder="e.g. FAC202601" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="full_name" class="form-label fw-semibold">Full Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="full_name" name="full_name" placeholder="e.g. Dr. Rajesh Sharma" required>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="department" class="form-label fw-semibold">Department <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="department" name="department" placeholder="e.g. Information Technology" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="designation" class="form-label fw-semibold">Designation <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="designation" name="designation" placeholder="e.g. Associate Professor" required>
+                        </div>
+
+                        <div class="col-12">
+                            <label for="phone" class="form-label fw-semibold">Contact Phone (Optional)</label>
+                            <input type="tel" class="form-control" id="phone" name="phone" placeholder="e.g. +91 9876543210">
+                        </div>
+                    </div>
+
+                    <div class="d-grid mt-4">
+                        <button type="submit" class="btn btn-primary py-2 fw-semibold">
+                            <i class="bi bi-send-check me-1"></i> Submit Examiner Application
+                        </button>
+                    </div>
+                </form>
+
+                <div class="mt-4 pt-3 border-top text-center">
+                    <span class="text-muted small">Already registered? </span>
+                    <a href="{{ url_for('auth.login') }}" class="small fw-semibold">Log In</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

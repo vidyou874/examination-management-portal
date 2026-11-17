@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Evaluation History{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold mb-0">Evaluation History</h2>
+        <p class="text-muted small mb-0">Historical records of completed and drafted student assessments conducted by you</p>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover table-emp align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Student Name & Roll No</th>
+                        <th>Examination</th>
+                        <th>Slot Date & Time</th>
+                        <th>Status</th>
+                        <th>Final Score</th>
+                        <th>Submitted At</th>
+                        <th class="text-end">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ev in evaluations %}
+                    <tr>
+                        <td>
+                            <div class="fw-bold">{{ ev.student_name }}</div>
+                            <small class="text-primary"><code>{{ ev.student_id_number }}</code></small>
+                        </td>
+                        <td>
+                            <div class="fw-semibold">{{ ev.exam_title }}</div>
+                            <small class="text-muted">Max: {{ ev.exam_max_marks }}</small>
+                        </td>
+                        <td>
+                            <div>{{ ev.slot_date }}</div>
+                            <small class="text-muted">{{ ev.start_time }} - {{ ev.end_time }}</small>
+                        </td>
+                        <td>{{ ev.status | status_badge | safe }}</td>
+                        <td>
+                            {% if ev.status == 'submitted' %}
+                                <strong class="text-success">{{ ev.total_score }}</strong> / {{ ev.exam_max_marks }}
+                            {% else %}
+                                <span class="text-muted">Draft: {{ ev.total_score }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="small text-muted">{{ ev.submitted_at | datetime_format }}</td>
+                        <td class="text-end">
+                            <a href="{{ url_for('examiner.evaluate_student', booking_id=ev.booking_id) }}" class="btn btn-outline-secondary btn-sm">
+                                <i class="bi bi-eye me-1"></i> Review
+                            </a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center py-4 text-muted">No evaluation records found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

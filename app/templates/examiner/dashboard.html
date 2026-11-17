@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% block title %}Examiner Dashboard{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold mb-0">Examiner Portal</h2>
+        <p class="text-muted small mb-0">Manage examination slots, view student rosters, and conduct rubric-based evaluations</p>
+    </div>
+    <a href="{{ url_for('examiner.create_slot_route') }}" class="btn btn-primary btn-sm">
+        <i class="bi bi-calendar-plus me-1"></i> Create Exam Slot
+    </a>
+</div>
+
+<!-- Stats Row -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card d-flex align-items-center">
+            <div class="stat-icon bg-primary bg-opacity-10 text-primary me-3">
+                <i class="bi bi-journal-text"></i>
+            </div>
+            <div>
+                <span class="text-muted small">Assigned Exams</span>
+                <h4 class="fw-bold mb-0">{{ stats.assigned_exams_count }}</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card d-flex align-items-center">
+            <div class="stat-icon bg-info bg-opacity-10 text-info me-3">
+                <i class="bi bi-calendar-check"></i>
+            </div>
+            <div>
+                <span class="text-muted small">My Active Slots</span>
+                <h4 class="fw-bold mb-0">{{ stats.total_slots }}</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card d-flex align-items-center">
+            <div class="stat-icon bg-success bg-opacity-10 text-success me-3">
+                <i class="bi bi-people"></i>
+            </div>
+            <div>
+                <span class="text-muted small">Booked Students</span>
+                <h4 class="fw-bold mb-0">{{ stats.booked_students }}</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="stat-card d-flex align-items-center">
+            <div class="stat-icon bg-warning bg-opacity-10 text-warning me-3">
+                <i class="bi bi-pencil-square"></i>
+            </div>
+            <div>
+                <span class="text-muted small">Pending Evaluations</span>
+                <h4 class="fw-bold mb-0 text-warning">{{ stats.pending_evaluations }}</h4>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Assigned Examinations -->
+    <div class="col-lg-6">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                <h5 class="fw-bold mb-0"><i class="bi bi-award text-primary me-2"></i> Assigned Examinations</h5>
+                <a href="{{ url_for('examiner.examinations') }}" class="btn btn-outline-primary btn-sm">All Assigned</a>
+            </div>
+            <div class="card-body p-0">
+                {% if assigned_exams %}
+                <div class="table-responsive">
+                    <table class="table table-hover table-emp align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Examination</th>
+                                <th>Status</th>
+                                <th class="text-end">Slots</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for e in assigned_exams %}
+                            <tr>
+                                <td>
+                                    <div class="fw-bold">{{ e.title }}</div>
+                                    <small class="text-muted">{{ e.course_code }} &bull; Max Marks: {{ e.max_marks }}</small>
+                                </td>
+                                <td>{{ e.status | status_badge | safe }}</td>
+                                <td class="text-end">
+                                    <a href="{{ url_for('examiner.create_slot_route', examination_id=e.id) }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-plus-lg"></i> Slot
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="p-4 text-center text-muted">No examinations assigned by administrator yet.</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Upcoming Slots -->
+    <div class="col-lg-6">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                <h5 class="fw-bold mb-0"><i class="bi bi-calendar-event text-success me-2"></i> Upcoming Examination Slots</h5>
+                <a href="{{ url_for('examiner.slots') }}" class="btn btn-outline-success btn-sm">Manage All Slots</a>
+            </div>
+            <div class="card-body p-0">
+                {% if slots %}
+                <div class="table-responsive">
+                    <table class="table table-hover table-emp align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Date & Time</th>
+                                <th>Exam</th>
+                                <th>Booked</th>
+                                <th class="text-end">Roster</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for s in slots %}
+                            <tr>
+                                <td>
+                                    <strong>{{ s.slot_date }}</strong>
+                                    <div class="small text-muted">{{ s.start_time }} - {{ s.end_time }}</div>
+                                </td>
+                                <td>
+                                    <div class="fw-semibold">{{ s.exam_title }}</div>
+                                    <small class="text-muted">{{ s.venue_or_link }}</small>
+                                </td>
+                                <td>
+                                    <span class="badge {% if s.booked_count >= s.capacity %}bg-danger{% else %}bg-primary{% endif %}">
+                                        {{ s.booked_count }} / {{ s.capacity }}
+                                    </span>
+                                </td>
+                                <td class="text-end">
+                                    <a href="{{ url_for('examiner.slot_roster', slot_id=s.id) }}" class="btn btn-sm btn-outline-secondary">
+                                        <i class="bi bi-people-fill me-1"></i> Roster
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="p-4 text-center text-muted">No slots created yet. Click "Create Exam Slot" to schedule examination sessions.</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

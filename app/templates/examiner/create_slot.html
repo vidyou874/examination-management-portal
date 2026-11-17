@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Create Examination Slot{% endblock %}
+{% block content %}
+<div class="row justify-content-center my-4">
+    <div class="col-md-8">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3 border-0">
+                <h4 class="fw-bold mb-1"><i class="bi bi-calendar-plus text-primary me-2"></i> Schedule Examination Slot</h4>
+                <p class="text-muted small mb-0">Create a session for students to book during the permitted slot creation period</p>
+            </div>
+            <div class="card-body px-4">
+                <form method="POST" action="{{ url_for('examiner.create_slot_route') }}">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Examination <span class="text-danger">*</span></label>
+                            <select class="form-select" name="examination_id" required>
+                                <option value="">Select assigned examination...</option>
+                                {% for e in exams %}
+                                <option value="{{ e.id }}" {% if selected_exam == (e.id | string) %}selected{% endif %}>
+                                    {{ e.course_code }} - {{ e.title }} (Status: {{ e.status }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Slot Date <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" name="slot_date" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Start Time <span class="text-danger">*</span></label>
+                            <input type="time" class="form-control" name="start_time" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">End Time <span class="text-danger">*</span></label>
+                            <input type="time" class="form-control" name="end_time" required>
+                        </div>
+
+                        <div class="col-md-8">
+                            <label class="form-label fw-semibold">Venue / Online Link <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="venue_or_link" placeholder="e.g. Lab 304, Academic Block 2, or Meeting Link" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Capacity (Seats) <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" name="capacity" value="10" min="1" required>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-light border small mt-4 mb-3">
+                        <strong><i class="bi bi-shield-check text-success me-1"></i> Conflict & Eligibility Rules:</strong>
+                        <ul class="mb-0 ps-3">
+                            <li>You must be assigned to this examination.</li>
+                            <li>The exam must be in the slot creation phase or allowed timeline.</li>
+                            <li>You cannot schedule overlapping slots on the same date.</li>
+                            <li>Once students book into this slot, it can no longer be edited or cancelled directly by the examiner.</li>
+                        </ul>
+                    </div>
+
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{{ url_for('examiner.slots') }}" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary px-4">
+                            <i class="bi bi-check-lg me-1"></i> Schedule Slot
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

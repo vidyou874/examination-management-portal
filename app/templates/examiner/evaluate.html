@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% block title %}Evaluate - {{ booking.student_name }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-1">
+                <li class="breadcrumb-item"><a href="{{ url_for('examiner.slots') }}">My Slots</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('examiner.slot_roster', slot_id=booking.slot_id) }}">Roster</a></li>
+                <li class="breadcrumb-item active">{{ booking.student_name }}</li>
+            </ol>
+        </nav>
+        <h2 class="fw-bold mb-0">Student Rubric Evaluation</h2>
+        <div class="text-muted small">Examination: <strong>{{ booking.exam_title }}</strong> (Max Marks: <strong>{{ booking.max_marks }}</strong>)</div>
+    </div>
+    <a href="{{ url_for('examiner.slot_roster', slot_id=booking.slot_id) }}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i> Back to Roster
+    </a>
+</div>
+
+<!-- Student Header Card -->
+<div class="card shadow-sm border-0 mb-4 bg-light">
+    <div class="card-body">
+        <div class="row align-items-center">
+            <div class="col-md-4">
+                <span class="text-muted small text-uppercase fw-bold">Candidate</span>
+                <h5 class="fw-bold mb-0 text-primary">{{ booking.student_name }}</h5>
+                <small class="text-muted">Roll No: <code>{{ booking.student_id_number }}</code></small>
+            </div>
+            <div class="col-md-4">
+                <span class="text-muted small text-uppercase fw-bold">Department & Program</span>
+                <div>{{ booking.department }}</div>
+                <small class="text-muted">{{ booking.program }}</small>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <span class="text-muted small text-uppercase fw-bold">Evaluation Status</span>
+                <div>
+                    {% if booking.evaluation_status %}
+                        {{ booking.evaluation_status | status_badge | safe }}
+                    {% else %}
+                        <span class="badge bg-warning text-dark">Not Started</span>
+                    {% endif %}
+                </div>
+                {% if booking.evaluation_status == 'submitted' %}
+                    <div class="mt-1">
+                        <strong class="fs-5 text-success">{{ booking.total_score }}</strong> / {{ booking.max_marks }} Marks
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if booking.evaluation_status == 'submitted' %}
+<div class="alert alert-success d-flex align-items-center mb-4">
+    <i class="bi bi-lock-fill fs-4 me-3"></i>
+    <div>
+        <strong>Evaluation Submitted and Finalized:</strong> This evaluation was submitted on {{ booking.submitted_at | datetime_format }} and is locked against modifications.
+    </div>
+</div>
+{% endif %}
+
+<!-- Scoring Formula Card -->
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-body py-2 px-3 bg-light rounded text-muted small">
+        <i class="bi bi-calculator me-1 text-primary"></i> <strong>Weighted Evaluation Formula:</strong>
+        Final Score = \(\left[ \sum_i \left( \frac{\text{Marks}_i}{\text{Max}_i} \times \text{Weight}_i \right) \div 100 \right] \times \text{Exam Max Marks}\)
+    </div>
+</div>
+
+<!-- Rubric Grading Form -->
+<form method="POST" action="{{ url_for('examiner.evaluate_student', booking_id=booking.booking_id) }}">
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-white py-3">
+            <h5 class="fw-bold mb-0"><i class="bi bi-check2-square text-primary me-2"></i> Rubric Assessment Criteria</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-bordered align-middle mb-0 rubric-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 30%;">Criterion & Details</th>
+                            <th style="width: 15%;" class="text-center">Max Marks</th>
+                            <th style="width: 15%;" class="text-center">Weightage</th>
+                            <th style="width: 20%;">Marks Awarded <span class="text-danger">*</span></th>
+                            <th style="width: 20%;">Criterion Feedback</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in rubrics %}
+                        {% set existing = existing_details.get(r.id, {}) %}
+                        <tr>
+                            <td>
+                                <div class="fw-bold text-dark">{{ r.criterion_name }}</div>
+                                <small class="text-muted">{{ r.description or 'No additional description' }}</small>
+                            </td>
+                            <td class="text-center fw-bold">{{ r.max_marks }}</td>
+                            <td class="text-center">
+                                <span class="badge bg-info text-dark">{{ r.weightage }}%</span>
+                            </td>
+                            <td>
+                                <div class="input-group">
+                                    <input type="number" step="0.25" min="0" max="{{ r.max_marks }}" class="form-control fw-bold text-center" 
+                                           name="marks_{{ r.id }}" 
+                                           value="{{ existing.get('marks', '') }}"
+                                           placeholder="0.0 - {{ r.max_marks }}"
+                                           {% if booking.evaluation_status == 'submitted' %}disabled{% endif %} required>
+                                    <span class="input-group-text small text-muted">/ {{ r.max_marks }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                <input type="text" class="form-control form-control-sm" 
+                                       name="remarks_{{ r.id }}" 
+                                       value="{{ existing.get('remarks', '') }}"
+                                       placeholder="Notes for student (optional)"
+                                       {% if booking.evaluation_status == 'submitted' %}disabled{% endif %}>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overall Remarks -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-white py-3">
+            <h5 class="fw-bold mb-0"><i class="bi bi-chat-left-text text-primary me-2"></i> Overall Examiner Remarks & Observations</h5>
+        </div>
+        <div class="card-body">
+            <textarea class="form-control" name="overall_remarks" rows="3" 
+                      placeholder="Comprehensive feedback on candidate presentation, viva response, practical defense..."
+                      {% if booking.evaluation_status == 'submitted' %}disabled{% endif %}>{{ booking.evaluation_remarks or '' }}</textarea>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    {% if booking.evaluation_status != 'submitted' %}
+    <div class="d-flex justify-content-between align-items-center mb-5">
+        <a href="{{ url_for('examiner.slot_roster', slot_id=booking.slot_id) }}" class="btn btn-secondary">
+            Cancel
+        </a>
+        <div class="btn-group">
+            <button type="submit" name="action_type" value="save_draft" class="btn btn-outline-primary px-4">
+                <i class="bi bi-save me-1"></i> Save as Draft
+            </button>
+            <button type="submit" name="action_type" value="submit_final" class="btn btn-success px-4"
+                    onclick="return confirm('Are you sure you want to finalize and submit this evaluation? Once submitted, marks cannot be altered without administrative intervention.');">
+                <i class="bi bi-check-circle-fill me-1"></i> Submit Final Evaluation
+            </button>
+        </div>
+    </div>
+    {% endif %}
+</form>
+{% endblock %}

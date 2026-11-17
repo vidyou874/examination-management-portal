@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Account Pending Approval{% endblock %}
+{% block content %}
+<div class="row justify-content-center my-5">
+    <div class="col-md-6 text-center">
+        <div class="card shadow-sm p-4 border-warning">
+            <div class="card-body">
+                <i class="bi bi-clock-history text-warning display-2 mb-3"></i>
+                <h3 class="card-title fw-bold">Approval Pending</h3>
+                <p class="card-text text-muted mt-2">
+                    Your examiner faculty registration has been received and is currently under administrative review.
+                </p>
+                <div class="alert alert-light border small text-start my-3">
+                    <strong>Next Steps:</strong>
+                    <ul class="mb-0 ps-3">
+                        <li>The system administrator must verify your faculty credentials.</li>
+                        <li>Once approved, you will be able to log in and access assigned examinations.</li>
+                        <li>If urgent, please contact the examination cell coordinator.</li>
+                    </ul>
+                </div>
+                <a href="{{ url_for('auth.login') }}" class="btn btn-primary mt-2">
+                    <i class="bi bi-arrow-left me-1"></i> Return to Login
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

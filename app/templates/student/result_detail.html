@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}Result Report - {{ result.exam_title }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-1">
+                <li class="breadcrumb-item"><a href="{{ url_for('student.results') }}">Results</a></li>
+                <li class="breadcrumb-item active">{{ result.course_code }}</li>
+            </ol>
+        </nav>
+        <h2 class="fw-bold mb-0">Official Examination Scorecard</h2>
+        <div class="text-muted small">Course: <strong>{{ result.course_code }} - {{ result.course_name }}</strong> &bull; Published: {{ result.published_at | datetime_format }}</div>
+    </div>
+    <a href="{{ url_for('student.results') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i> Back to Results
+    </a>
+</div>
+
+<!-- Score Summary Card -->
+<div class="card shadow-sm border-0 mb-4 bg-light">
+    <div class="card-body">
+        <div class="row align-items-center">
+            <div class="col-md-5">
+                <span class="text-muted small text-uppercase fw-bold">Examination</span>
+                <h4 class="fw-bold mb-0 text-primary">{{ result.exam_title }}</h4>
+                <div class="small text-muted">{{ result.exam_type }} &bull; Evaluator: {{ result.examiner_name }}</div>
+                <div class="small text-muted">Session: {{ result.slot_date }} ({{ result.start_time }}-{{ result.end_time }})</div>
+            </div>
+            <div class="col-md-4 text-center my-3 my-md-0">
+                <span class="text-muted small text-uppercase fw-bold">Total Weighted Score</span>
+                <div class="display-5 fw-bold text-success">{{ result.total_score }} <span class="fs-4 text-muted">/ {{ result.exam_max_marks }}</span></div>
+                {% set pct = ((result.total_score / result.exam_max_marks) * 100) | round(1) %}
+                <span class="badge {% if pct >= 50 %}bg-success{% else %}bg-danger{% endif %} fs-6">{{ pct }}% Overall</span>
+            </div>
+            <div class="col-md-3 text-md-end">
+                <span class="badge bg-success p-2"><i class="bi bi-check-circle-fill me-1"></i> Certified Result</span>
+                {% if result.publication_notes %}
+                <div class="small text-muted mt-2"><strong>Notes:</strong> {{ result.publication_notes }}</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Detailed Rubric Breakdown Table -->
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-header bg-white py-3">
+        <h5 class="fw-bold mb-0"><i class="bi bi-card-checklist text-primary me-2"></i> Rubric Criterion-Level Evaluation</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-bordered table-emp align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th style="width: 35%;">Evaluation Criterion</th>
+                        <th style="width: 15%;" class="text-center">Max Marks</th>
+                        <th style="width: 15%;" class="text-center">Weightage</th>
+                        <th style="width: 15%;" class="text-center">Marks Awarded</th>
+                        <th style="width: 20%;">Faculty Feedback</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for d in details %}
+                    <tr>
+                        <td>
+                            <div class="fw-bold">{{ d.criterion_name }}</div>
+                            <small class="text-muted">{{ d.description or '-' }}</small>
+                        </td>
+                        <td class="text-center fw-semibold">{{ d.max_marks }}</td>
+                        <td class="text-center"><span class="badge bg-info text-dark">{{ d.weightage }}%</span></td>
+                        <td class="text-center fw-bold text-success fs-6">{{ d.marks_awarded }}</td>
+                        <td class="small">{{ d.criterion_remarks or '<span class="text-muted">-</span>' | safe }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Examiner Overall Remarks -->
+{% if result.remarks %}
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-header bg-white py-3">
+        <h5 class="fw-bold mb-0"><i class="bi bi-chat-square-quote text-primary me-2"></i> Overall Examiner Remarks</h5>
+    </div>
+    <div class="card-body">
+        <blockquote class="blockquote mb-0 fs-6">
+            <p>{{ result.remarks }}</p>
+            <footer class="blockquote-footer text-muted">Evaluated by <cite title="{{ result.examiner_name }}">{{ result.examiner_name }}</cite></footer>
+        </blockquote>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block title %}Book Slot - {{ exam.title }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-1">
+                <li class="breadcrumb-item"><a href="{{ url_for('student.examinations') }}">Examinations</a></li>
+                <li class="breadcrumb-item active">{{ exam.course_code }}</li>
+            </ol>
+        </nav>
+        <h2 class="fw-bold mb-0">{{ exam.title }}</h2>
+        <div class="text-muted small">Course: <strong>{{ exam.course_code }} - {{ exam.course_name }}</strong> &bull; Total Marks: <strong>{{ exam.max_marks }}</strong></div>
+    </div>
+    <a href="{{ url_for('student.examinations') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i> Back to Examinations
+    </a>
+</div>
+
+<!-- Booking Status Banner -->
+{% if my_booking %}
+<div class="alert alert-success d-flex align-items-center mb-4">
+    <i class="bi bi-check-circle-fill fs-3 me-3"></i>
+    <div>
+        <h5 class="alert-heading mb-1 fw-bold">Active Reservation Confirmed</h5>
+        <div>You already hold an active confirmed slot booking for this examination. Under institutional policy, a candidate may hold at most one active slot per examination.</div>
+        <a href="{{ url_for('student.my_bookings') }}" class="btn btn-sm btn-outline-success mt-2 fw-semibold">View / Manage My Booking</a>
+    </div>
+</div>
+{% elif not is_booking_open %}
+<div class="alert alert-warning d-flex align-items-center mb-4">
+    <i class="bi bi-exclamation-triangle-fill fs-3 me-3"></i>
+    <div>
+        <h5 class="alert-heading mb-1 fw-bold">Booking Window Closed</h5>
+        <div>{{ booking_msg }}</div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Available Slots -->
+<div class="card shadow-sm border-0">
+    <div class="card-header bg-white py-3">
+        <h5 class="fw-bold mb-0"><i class="bi bi-calendar3-range text-primary me-2"></i> Available Examination Time Slots</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover table-emp align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Date & Time</th>
+                        <th>Venue / Link</th>
+                        <th>Examiner Faculty</th>
+                        <th>Seats Available</th>
+                        <th>Status</th>
+                        <th class="text-end">Reservation</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in slots %}
+                    {% set seats_left = s.capacity - s.booked_count %}
+                    <tr>
+                        <td>
+                            <strong>{{ s.slot_date }}</strong>
+                            <div class="small text-muted">{{ s.start_time }} - {{ s.end_time }}</div>
+                        </td>
+                        <td>{{ s.venue_or_link }}</td>
+                        <td>
+                            <div class="fw-semibold">{{ s.examiner_name }}</div>
+                            <small class="text-muted">Faculty Examiner</small>
+                        </td>
+                        <td>
+                            {% if seats_left > 0 and s.status == 'available' %}
+                                <span class="badge bg-success">{{ seats_left }} seats left</span>
+                                <small class="text-muted d-block">{{ s.booked_count }}/{{ s.capacity }} booked</small>
+                            {% else %}
+                                <span class="badge bg-danger">Slot Full</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ s.status | status_badge | safe }}</td>
+                        <td class="text-end">
+                            {% if my_booking %}
+                                <button class="btn btn-secondary btn-sm" disabled>Already Booked</button>
+                            {% elif not is_booking_open %}
+                                <button class="btn btn-secondary btn-sm" disabled>Booking Closed</button>
+                            {% elif s.status != 'available' or seats_left <= 0 %}
+                                <button class="btn btn-outline-danger btn-sm" disabled>Full</button>
+                            {% else %}
+                                <form method="POST" action="{{ url_for('student.book_slot_route', exam_id=exam.id) }}" class="d-inline">
+                                    <input type="hidden" name="slot_id" value="{{ s.id }}">
+                                    <button type="submit" class="btn btn-primary btn-sm"
+                                            onclick="return confirm('Confirm booking this slot on {{ s.slot_date }} at {{ s.start_time }}?');">
+                                        <i class="bi bi-check-lg me-1"></i> Book Slot
+                                    </button>
+                                </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center py-5 text-muted">
+                            <i class="bi bi-calendar-x fs-3 d-block mb-1"></i>
+                            No examination slots have been created for this examination yet. Please check back later.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

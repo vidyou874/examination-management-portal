@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}My Bookings{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold mb-0">My Examination Bookings</h2>
+        <p class="text-muted small mb-0">Track active slot reservations, cancellation deadlines, and historical booking changes</p>
+    </div>
+    <a href="{{ url_for('student.examinations') }}" class="btn btn-primary btn-sm">
+        <i class="bi bi-search me-1"></i> Book New Examination
+    </a>
+</div>
+
+<div class="card shadow-sm border-0">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover table-emp align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Booking ID</th>
+                        <th>Examination</th>
+                        <th>Slot Schedule</th>
+                        <th>Venue / Mode</th>
+                        <th>Examiner</th>
+                        <th>Status</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for b in bookings %}
+                    <tr>
+                        <td class="text-muted small">#{{ b.id }}</td>
+                        <td>
+                            <div class="fw-bold text-primary">{{ b.exam_title }}</div>
+                            <span class="badge bg-secondary">{{ b.course_code }}</span>
+                            <small class="text-muted">&bull; {{ b.exam_type }}</small>
+                        </td>
+                        <td>
+                            <strong>{{ b.slot_date }}</strong>
+                            <div class="small text-muted">{{ b.start_time }} - {{ b.end_time }}</div>
+                        </td>
+                        <td>{{ b.venue_or_link }}</td>
+                        <td>
+                            <div class="fw-semibold">{{ b.examiner_name }}</div>
+                            <small class="text-muted">Examiner</small>
+                        </td>
+                        <td>
+                            {{ b.status | status_badge | safe }}
+                            {% if b.status == 'cancelled' and b.cancellation_reason %}
+                                <div class="small text-muted">Reason: {{ b.cancellation_reason }}</div>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            <a href="{{ url_for('student.booking_history', booking_id=b.id) }}" class="btn btn-outline-secondary btn-sm me-1" title="View Booking History Events">
+                                <i class="bi bi-clock-history"></i>
+                            </a>
+
+                            {% if b.status == 'confirmed' %}
+                            <form method="POST" action="{{ url_for('student.cancel_booking_route', booking_id=b.id) }}" class="d-inline"
+                                  onsubmit="return confirm('Are you sure you want to cancel this booking? This will release your reserved seat.');">
+                                <button type="submit" class="btn btn-outline-danger btn-sm">
+                                    <i class="bi bi-x-circle me-1"></i> Cancel
+                                </button>
+                            </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center py-5 text-muted">
+                            <i class="bi bi-ticket-perforated fs-2 text-muted d-block mb-2"></i>
+                            You have no active or historical bookings. Browse available exams to book a slot.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

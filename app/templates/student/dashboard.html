@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% block title %}Student Dashboard{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold mb-0">Student Portal</h2>
+        <p class="text-muted small mb-0">Welcome, <strong>{{ profile.full_name }}</strong> (<code>{{ profile.student_id_number }}</code>) &bull; {{ profile.department }}</p>
+    </div>
+    <a href="{{ url_for('student.examinations') }}" class="btn btn-primary btn-sm">
+        <i class="bi bi-search me-1"></i> Browse Open Exams
+    </a>
+</div>
+
+<!-- Stats Row -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="stat-card d-flex align-items-center">
+            <div class="stat-icon bg-success bg-opacity-10 text-success me-3">
+                <i class="bi bi-ticket-detailed"></i>
+            </div>
+            <div>
+                <span class="text-muted small">Active Reservations</span>
+                <h4 class="fw-bold mb-0 text-success">{{ stats.active_bookings_count }}</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card d-flex align-items-center">
+            <div class="stat-icon bg-primary bg-opacity-10 text-primary me-3">
+                <i class="bi bi-journal-check"></i>
+            </div>
+            <div>
+                <span class="text-muted small">Open Examinations</span>
+                <h4 class="fw-bold mb-0">{{ stats.available_exams_count }}</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card d-flex align-items-center">
+            <div class="stat-icon bg-info bg-opacity-10 text-info me-3">
+                <i class="bi bi-trophy"></i>
+            </div>
+            <div>
+                <span class="text-muted small">Published Results</span>
+                <h4 class="fw-bold mb-0">{{ stats.published_results_count }}</h4>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Active Bookings -->
+    <div class="col-lg-7">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                <h5 class="fw-bold mb-0"><i class="bi bi-calendar2-check text-success me-2"></i> Upcoming Exam Sessions</h5>
+                <a href="{{ url_for('student.my_bookings') }}" class="btn btn-outline-secondary btn-sm">All Bookings</a>
+            </div>
+            <div class="card-body p-0">
+                {% if active_bookings %}
+                <div class="table-responsive">
+                    <table class="table table-hover table-emp align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Exam</th>
+                                <th>Schedule & Venue</th>
+                                <th>Faculty</th>
+                                <th class="text-end">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for b in active_bookings %}
+                            <tr>
+                                <td>
+                                    <div class="fw-bold">{{ b.exam_title }}</div>
+                                    <span class="badge bg-secondary">{{ b.course_code }}</span>
+                                </td>
+                                <td>
+                                    <strong>{{ b.slot_date }}</strong>
+                                    <div class="small text-muted">{{ b.start_time }} - {{ b.end_time }} &bull; {{ b.venue_or_link }}</div>
+                                </td>
+                                <td>{{ b.examiner_name }}</td>
+                                <td class="text-end">
+                                    <form method="POST" action="{{ url_for('student.cancel_booking_route', booking_id=b.id) }}" class="d-inline"
+                                          onsubmit="return confirm('Cancel this confirmed booking? The seat will be released for other students.');">
+                                        <button type="submit" class="btn btn-outline-danger btn-sm">
+                                            Cancel
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="p-4 text-center text-muted">
+                    <i class="bi bi-calendar-x text-muted fs-3 d-block mb-1"></i>
+                    No upcoming examination slots booked. Browse available exams to reserve a slot.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Available Examinations to Book -->
+    <div class="col-lg-5">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                <h5 class="fw-bold mb-0"><i class="bi bi-clock-history text-primary me-2"></i> Available to Book</h5>
+                <a href="{{ url_for('student.examinations') }}" class="btn btn-outline-primary btn-sm">Browse All</a>
+            </div>
+            <div class="card-body p-0">
+                {% if available_exams %}
+                <ul class="list-group list-group-flush">
+                    {% for e in available_exams %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center p-3">
+                        <div>
+                            <div class="fw-bold">{{ e.title }}</div>
+                            <small class="text-muted">{{ e.course_code }} &bull; Deadline: {{ e.booking_end | datetime_format }}</small>
+                        </div>
+                        <a href="{{ url_for('student.exam_slots', exam_id=e.id) }}" class="btn btn-sm btn-primary">
+                            Book Slot
+                        </a>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <div class="p-4 text-center text-muted">
+                    No new examinations currently open for student booking.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

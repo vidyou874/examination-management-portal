@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block title %}Slot Roster - {{ slot.exam_title }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-1">
+                <li class="breadcrumb-item"><a href="{{ url_for('examiner.slots') }}">My Slots</a></li>
+                <li class="breadcrumb-item active">Roster</li>
+            </ol>
+        </nav>
+        <h2 class="fw-bold mb-0">Examination Slot Roster</h2>
+        <div class="text-muted small">Exam: <strong>{{ slot.exam_title }} ({{ slot.course_code }})</strong></div>
+    </div>
+    <a href="{{ url_for('examiner.slots') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i> Back to Slots
+    </a>
+</div>
+
+<!-- Slot Details Card -->
+<div class="card shadow-sm border-0 mb-4 bg-light">
+    <div class="card-body py-3">
+        <div class="row align-items-center">
+            <div class="col-md-3">
+                <span class="text-muted small text-uppercase fw-bold">Schedule</span>
+                <div class="fw-bold">{{ slot.slot_date }}</div>
+                <small class="text-muted">{{ slot.start_time }} - {{ slot.end_time }}</small>
+            </div>
+            <div class="col-md-4">
+                <span class="text-muted small text-uppercase fw-bold">Venue / Platform</span>
+                <div>{{ slot.venue_or_link }}</div>
+            </div>
+            <div class="col-md-3">
+                <span class="text-muted small text-uppercase fw-bold">Attendance / Capacity</span>
+                <div class="fw-bold">{{ slot.booked_count }} / {{ slot.capacity }} Confirmed</div>
+            </div>
+            <div class="col-md-2 text-end">
+                {{ slot.status | status_badge | safe }}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Booked Students Table -->
+<div class="card shadow-sm border-0">
+    <div class="card-header bg-white py-3">
+        <h5 class="fw-bold mb-0"><i class="bi bi-person-lines-fill text-primary me-2"></i> Booked Students List</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover table-emp align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Roll No / ID</th>
+                        <th>Student Name</th>
+                        <th>Department & Program</th>
+                        <th>Booking Time</th>
+                        <th>Evaluation Status</th>
+                        <th>Final Score</th>
+                        <th class="text-end">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for st in students %}
+                    <tr>
+                        <td class="fw-bold text-primary"><code>{{ st.student_id_number }}</code></td>
+                        <td>
+                            <div class="fw-semibold">{{ st.student_name }}</div>
+                            <small class="text-muted">{{ st.student_email }}</small>
+                        </td>
+                        <td>
+                            <div>{{ st.department }}</div>
+                            <small class="text-muted">{{ st.program }}</small>
+                        </td>
+                        <td class="small text-muted">{{ st.booked_at | datetime_format }}</td>
+                        <td>
+                            {% if st.evaluation_status %}
+                                {{ st.evaluation_status | status_badge | safe }}
+                            {% else %}
+                                <span class="badge bg-warning text-dark">Pending Evaluation</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if st.evaluation_status == 'submitted' %}
+                                <strong class="text-success">{{ st.total_score }}</strong> / {{ slot.max_marks }}
+                            {% elif st.evaluation_status == 'draft' %}
+                                <span class="text-muted small">Draft: {{ st.total_score }}</span>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            {% if st.evaluation_status == 'submitted' %}
+                            <a href="{{ url_for('examiner.evaluate_student', booking_id=st.booking_id) }}" class="btn btn-outline-secondary btn-sm">
+                                <i class="bi bi-eye me-1"></i> View Marks
+                            </a>
+                            {% else %}
+                            <a href="{{ url_for('examiner.evaluate_student', booking_id=st.booking_id) }}" class="btn btn-primary btn-sm">
+                                <i class="bi bi-pencil-square me-1"></i> Evaluate
+                            </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center py-4 text-muted">
+                            <i class="bi bi-people text-muted fs-4 d-block mb-1"></i>
+                            No students have booked this slot yet.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
