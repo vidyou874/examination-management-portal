@@ -73,6 +73,13 @@ def create_app(config_name='default'):
         val_str = str(value).replace('T', ' ')
         return val_str[:16]
 
+    @app.after_request
+    def add_no_cache_headers(response):
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, max-age=0"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+        return response
+
     @app.errorhandler(403)
     def forbidden_error(e):
         return render_template('errors/403.html'), 403

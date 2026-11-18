@@ -218,8 +218,8 @@ def seed():
 
     # Exam 2 Slots (CS201 - Conducted and Evaluated in the past)
     slot_past_id, _ = create_slot(exam2_id, ex2_id, past_date, "10:00", "12:00", "Database Systems Lab 202", 2, bypass_window_check=True)
-    b_past1_id, _ = book_examination_slot(s1_id, exam2_id, slot_past_id, "Pre-scheduled booking")
-    b_past2_id, _ = book_examination_slot(s5_id, exam2_id, slot_past_id, "Pre-scheduled booking")
+    b_past1_id, _ = book_examination_slot(s1_id, exam2_id, slot_past_id, "Pre-scheduled booking", bypass_window_check=True)
+    b_past2_id, _ = book_examination_slot(s5_id, exam2_id, slot_past_id, "Pre-scheduled booking", bypass_window_check=True)
 
     print("[6/6] Submitting Rubric Evaluations and Publishing Results...")
     r_list = db.execute("SELECT id FROM examination_rubrics WHERE examination_id = ? ORDER BY display_order ASC", (exam2_id,)).fetchall()

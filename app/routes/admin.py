@@ -273,12 +273,26 @@ def students():
 # ----------------- SLOTS & REASSIGNMENT -----------------
 @admin_bp.route('/slots')
 def slots():
-    exam_id = request.args.get('examination_id')
-    examiner_id = request.args.get('examiner_id')
-    slot_list = get_slots(examination_id=exam_id, examiner_id=examiner_id)
+    exam_id = request.args.get('examination_id', '').strip()
+    examiner_id = request.args.get('examiner_id', '').strip()
+    status = request.args.get('status', '').strip()
+
+    slot_list = get_slots(
+        examination_id=exam_id if exam_id else None,
+        examiner_id=examiner_id if examiner_id else None,
+        status=status if status else None
+    )
     exams = get_examinations()
     examiners_list = list_examiners(approval_status='approved')
-    return render_template('admin/slots.html', slots=slot_list, exams=exams, examiners=examiners_list, selected_exam=exam_id)
+    return render_template(
+        'admin/slots.html',
+        slots=slot_list,
+        exams=exams,
+        examiners=examiners_list,
+        selected_exam=exam_id,
+        selected_examiner=examiner_id,
+        selected_status=status
+    )
 
 @admin_bp.route('/slots/<int:slot_id>/reassign', methods=['POST'])
 def reassign_slot(slot_id):

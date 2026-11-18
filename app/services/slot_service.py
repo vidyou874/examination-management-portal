@@ -4,28 +4,75 @@ from app.services.audit_service import log_audit
 
 def get_slots(examination_id=None, examiner_id=None, status=None, date_from=None):
     db = get_db()
+    # Synchronize database table state with live confirmed booking counts
+    try:
+        db.execute("""
+            UPDATE examination_slots
+            SET booked_count = (
+                SELECT COUNT(*) FROM bookings b 
+                WHERE b.slot_id = examination_slots.id AND b.status = 'confirmed'
+            ),
+            status = CASE 
+                WHEN status = 'cancelled' THEN 'cancelled'
+                WHEN (
+                    SELECT COUNT(*) FROM bookings b 
+                    WHERE b.slot_id = examination_slots.id AND b.status = 'confirmed'
+                ) >= capacity THEN 'full'
+                ELSE 'available'
+            END
+        """)
+        db.commit()
+    except Exception:
+        pass
+
     query = """
-        SELECT s.*, 
+        SELECT s.id, s.examination_id, s.examiner_id, s.slot_date, s.start_time, s.end_time,
+               s.venue_or_link, s.capacity,
+               (SELECT COUNT(*) FROM bookings b WHERE b.slot_id = s.id AND b.status = 'confirmed') AS booked_count,
+               CASE 
+                   WHEN s.status = 'cancelled' THEN 'cancelled'
+                   WHEN (SELECT COUNT(*) FROM bookings b WHERE b.slot_id = s.id AND b.status = 'confirmed') >= s.capacity THEN 'full'
+                   ELSE 'available'
+               END AS status,
                e.title AS exam_title, e.max_marks, e.duration_minutes, e.status AS exam_status,
+               e.booking_start, e.booking_end,
                c.code AS course_code, c.name AS course_name,
-               u.username AS examiner_username, ep.full_name AS examiner_name
+               u.username AS examiner_username, 
+               COALESCE(ep.full_name, u.username) AS examiner_name
         FROM examination_slots s
         JOIN examinations e ON s.examination_id = e.id
         JOIN courses c ON e.course_id = c.id
         JOIN users u ON s.examiner_id = u.id
-        JOIN examiner_profiles ep ON u.id = ep.user_id
+        LEFT JOIN examiner_profiles ep ON u.id = ep.user_id
         WHERE 1=1
     """
     params = []
-    if examination_id:
-        query += " AND s.examination_id = ?"
-        params.append(examination_id)
-    if examiner_id:
-        query += " AND s.examiner_id = ?"
-        params.append(examiner_id)
-    if status:
-        query += " AND s.status = ?"
-        params.append(status)
+    if examination_id is not None and str(examination_id).strip() != "":
+        try:
+            params.append(int(examination_id))
+            query += " AND s.examination_id = ?"
+        except (ValueError, TypeError):
+            pass
+
+    if examiner_id is not None and str(examiner_id).strip() != "":
+        try:
+            params.append(int(examiner_id))
+            query += " AND s.examiner_id = ?"
+        except (ValueError, TypeError):
+            pass
+
+    if status is not None and str(status).strip() != "":
+        st = str(status).strip().lower()
+        if st == 'cancelled':
+            query += " AND s.status = 'cancelled'"
+        elif st == 'full':
+            query += " AND s.status != 'cancelled' AND (SELECT COUNT(*) FROM bookings b WHERE b.slot_id = s.id AND b.status = 'confirmed') >= s.capacity"
+        elif st == 'available':
+            query += " AND s.status != 'cancelled' AND (SELECT COUNT(*) FROM bookings b WHERE b.slot_id = s.id AND b.status = 'confirmed') < s.capacity"
+        else:
+            query += " AND s.status = ?"
+            params.append(st)
+
     if date_from:
         query += " AND s.slot_date >= ?"
         params.append(date_from)
@@ -37,16 +84,24 @@ def get_slot_by_id(slot_id):
     db = get_db()
     return db.execute(
         """
-        SELECT s.*, 
+        SELECT s.id, s.examination_id, s.examiner_id, s.slot_date, s.start_time, s.end_time,
+               s.venue_or_link, s.capacity,
+               (SELECT COUNT(*) FROM bookings b WHERE b.slot_id = s.id AND b.status = 'confirmed') AS booked_count,
+               CASE 
+                   WHEN s.status = 'cancelled' THEN 'cancelled'
+                   WHEN (SELECT COUNT(*) FROM bookings b WHERE b.slot_id = s.id AND b.status = 'confirmed') >= s.capacity THEN 'full'
+                   ELSE 'available'
+               END AS status,
                e.title AS exam_title, e.max_marks, e.duration_minutes, e.status AS exam_status,
                e.booking_start, e.booking_end,
                c.code AS course_code, c.name AS course_name,
-               u.username AS examiner_username, ep.full_name AS examiner_name
+               u.username AS examiner_username, 
+               COALESCE(ep.full_name, u.username) AS examiner_name
         FROM examination_slots s
         JOIN examinations e ON s.examination_id = e.id
         JOIN courses c ON e.course_id = c.id
         JOIN users u ON s.examiner_id = u.id
-        JOIN examiner_profiles ep ON u.id = ep.user_id
+        LEFT JOIN examiner_profiles ep ON u.id = ep.user_id
         WHERE s.id = ?
         """,
         (slot_id,)

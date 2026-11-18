@@ -63,10 +63,12 @@
                             <span class="text-muted small">Concluded ({{ e.booking_end | datetime_format }})</span>
                         {% elif e.status == 'closed' %}
                             <span class="text-muted small">Closed ({{ e.booking_end | datetime_format }})</span>
+                        {% elif e.status == 'booking_open' %}
+                            <span class="text-danger fw-semibold">Closes {{ e.booking_end | datetime_format }}</span>
                         {% elif e.status in ('draft', 'slot_creation') %}
                             <span class="text-muted small">Opens {{ e.booking_start | datetime_format }}</span>
                         {% else %}
-                            <span class="text-danger fw-semibold">{{ e.booking_end | datetime_format }}</span>
+                            <span class="text-muted small">{{ e.booking_end | datetime_format }}</span>
                         {% endif %}
                     </div>
                 </div>
@@ -84,14 +86,14 @@
                         <button class="btn btn-secondary w-100 btn-sm" disabled>
                             <i class="bi bi-lock me-1"></i> Bookings Closed
                         </button>
-                    {% elif e.status in ('draft', 'slot_creation') %}
-                        <button class="btn btn-outline-secondary w-100 btn-sm" disabled>
-                            <i class="bi bi-clock me-1"></i> Booking Not Open
-                        </button>
-                    {% else %}
+                    {% elif e.status == 'booking_open' %}
                         <a href="{{ url_for('student.exam_slots', exam_id=e.id) }}" class="btn btn-primary w-100 btn-sm">
                             <i class="bi bi-calendar-check me-1"></i> View Available Slots
                         </a>
+                    {% else %}
+                        <button class="btn btn-outline-secondary w-100 btn-sm" disabled>
+                            <i class="bi bi-clock me-1"></i> Booking Not Open
+                        </button>
                     {% endif %}
                 </div>
             </div>

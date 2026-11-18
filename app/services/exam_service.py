@@ -4,7 +4,72 @@ from app.services.audit_service import log_audit
 
 VALID_EXAM_STATUSES = ('draft', 'slot_creation', 'booking_open', 'closed', 'completed')
 
+def sync_examination_statuses():
+    """
+    Auto-synchronizes examination lifecycle statuses based on real-time schedule:
+    - Normalizes ISO datetime strings ('YYYY-MM-DDTHH:MM' -> 'YYYY-MM-DD HH:MM:00').
+    - Active examinations (status in ('slot_creation', 'booking_open')):
+      - Automatically transitions to 'booking_open' when current time reaches booking_start.
+      - Automatically transitions to 'closed' when current time exceeds booking_end.
+    """
+    db = get_db()
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    try:
+        # 1. Normalize any ISO formatted strings with 'T'
+        db.execute("""
+            UPDATE examinations
+            SET booking_start = REPLACE(booking_start, 'T', ' '),
+                booking_end = REPLACE(booking_end, 'T', ' '),
+                slot_creation_start = REPLACE(slot_creation_start, 'T', ' '),
+                slot_creation_end = REPLACE(slot_creation_end, 'T', ' ')
+            WHERE booking_start LIKE '%T%' OR slot_creation_start LIKE '%T%'
+        """)
+
+        # 2. Append seconds if only HH:MM is present
+        db.execute("""
+            UPDATE examinations
+            SET booking_start = booking_start || ':00'
+            WHERE LENGTH(booking_start) = 16
+        """)
+        db.execute("""
+            UPDATE examinations
+            SET booking_end = booking_end || ':00'
+            WHERE LENGTH(booking_end) = 16
+        """)
+        db.execute("""
+            UPDATE examinations
+            SET slot_creation_start = slot_creation_start || ':00'
+            WHERE LENGTH(slot_creation_start) = 16
+        """)
+        db.execute("""
+            UPDATE examinations
+            SET slot_creation_end = slot_creation_end || ':00'
+            WHERE LENGTH(slot_creation_end) = 16
+        """)
+
+        # 3. Transition 'slot_creation' -> 'booking_open' once booking_start is reached
+        db.execute("""
+            UPDATE examinations
+            SET status = 'booking_open'
+            WHERE status = 'slot_creation'
+              AND ? >= booking_start
+              AND ? <= booking_end
+        """, (now, now))
+
+        # 4. Transition active exams to 'closed' once booking_end passes
+        db.execute("""
+            UPDATE examinations
+            SET status = 'closed'
+            WHERE status IN ('slot_creation', 'booking_open')
+              AND ? > booking_end
+        """, (now,))
+
+        db.commit()
+    except Exception:
+        pass
+
 def get_examinations(status=None, course_id=None, search=None):
+    sync_examination_statuses()
     db = get_db()
     query = """
         SELECT e.*, c.code AS course_code, c.name AS course_name,
@@ -32,6 +97,7 @@ def get_examinations(status=None, course_id=None, search=None):
     return db.execute(query, params).fetchall()
 
 def get_examination_by_id(exam_id):
+    sync_examination_statuses()
     db = get_db()
     return db.execute(
         """
@@ -52,6 +118,25 @@ def create_examination(course_id, title, exam_type, duration_minutes, max_marks,
     db = get_db()
     if status not in VALID_EXAM_STATUSES:
         return None, f"Invalid examination status: {status}"
+
+    slot_creation_start = str(slot_creation_start).replace('T', ' ').strip()
+    slot_creation_end = str(slot_creation_end).replace('T', ' ').strip()
+    booking_start = str(booking_start).replace('T', ' ').strip()
+    booking_end = str(booking_end).replace('T', ' ').strip()
+    if len(slot_creation_start) == 16: slot_creation_start += ":00"
+    if len(slot_creation_end) == 16: slot_creation_end += ":00"
+    if len(booking_start) == 16: booking_start += ":00"
+    if len(booking_end) == 16: booking_end += ":00"
+
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    # If the initial status is active ('slot_creation' or 'booking_open'), auto-align with timeline
+    if status in ('slot_creation', 'booking_open'):
+        if booking_start <= now <= booking_end:
+            status = 'booking_open'
+        elif now > booking_end:
+            status = 'closed'
+        elif slot_creation_start <= now < booking_start:
+            status = 'slot_creation'
 
     try:
         cursor = db.cursor()
@@ -94,6 +179,22 @@ def update_examination(exam_id, title, exam_type, duration_minutes, max_marks,
     db = get_db()
     if status not in VALID_EXAM_STATUSES:
         return False, f"Invalid examination status: {status}"
+
+    slot_creation_start = str(slot_creation_start).replace('T', ' ').strip()
+    slot_creation_end = str(slot_creation_end).replace('T', ' ').strip()
+    booking_start = str(booking_start).replace('T', ' ').strip()
+    booking_end = str(booking_end).replace('T', ' ').strip()
+    if len(slot_creation_start) == 16: slot_creation_start += ":00"
+    if len(slot_creation_end) == 16: slot_creation_end += ":00"
+    if len(booking_start) == 16: booking_start += ":00"
+    if len(booking_end) == 16: booking_end += ":00"
+
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    if status in ('slot_creation', 'booking_open'):
+        if booking_start <= now <= booking_end:
+            status = 'booking_open'
+        elif now > booking_end:
+            status = 'closed'
 
     try:
         db.execute(
@@ -244,12 +345,19 @@ def is_slot_creation_allowed(exam):
     Admin can also explicitly open it via status 'slot_creation'.
     """
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    start_str = str(exam['slot_creation_start']).replace('T', ' ')
-    end_str = str(exam['slot_creation_end']).replace('T', ' ')
+    start_str = str(exam['slot_creation_start']).replace('T', ' ').strip()
+    end_str = str(exam['slot_creation_end']).replace('T', ' ').strip()
+    if len(start_str) == 16: start_str += ":00"
+    if len(end_str) == 16: end_str += ":00"
+
+    if exam['status'] == 'completed':
+        return False, "This examination has been completed."
+    if exam['status'] == 'closed':
+        return False, "This examination is closed."
 
     if exam['status'] == 'slot_creation':
         return True, None
-    
+
     # Also valid if within dates and status allows
     if exam['status'] in ('draft', 'slot_creation', 'booking_open'):
         if start_str <= now <= end_str:
@@ -258,7 +366,7 @@ def is_slot_creation_allowed(exam):
             return False, f"Slot creation has not started yet (Opens on {exam['slot_creation_start']})."
         else:
             return False, f"Slot creation deadline passed on {exam['slot_creation_end']}."
-    
+
     return False, f"Exam status is '{exam['status']}', slot creation is not open."
 
 def is_student_booking_allowed(exam):
@@ -266,8 +374,10 @@ def is_student_booking_allowed(exam):
     Checks if student booking is currently open based on lifecycle status and deadlines.
     """
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    start_str = str(exam['booking_start']).replace('T', ' ')
-    end_str = str(exam['booking_end']).replace('T', ' ')
+    start_str = str(exam['booking_start']).replace('T', ' ').strip()
+    end_str = str(exam['booking_end']).replace('T', ' ').strip()
+    if len(start_str) == 16: start_str += ":00"
+    if len(end_str) == 16: end_str += ":00"
 
     if exam['status'] == 'completed':
         return False, "This examination has already been conducted and concluded."
@@ -278,14 +388,10 @@ def is_student_booking_allowed(exam):
     if exam['status'] == 'draft':
         return False, "This examination is still in planning (Draft phase)."
 
-    if exam['status'] == 'slot_creation':
-        return False, f"Faculty slot creation is in progress. Student booking opens on {exam['booking_start']}."
-
-    if exam['status'] == 'booking_open':
-        if now < start_str:
-            return False, f"Student booking has not opened yet (Opens on {exam['booking_start']})."
-        if now > end_str:
-            return False, f"Booking deadline passed on {exam['booking_end']}."
+    # If within booking window, student booking is open!
+    if start_str <= now <= end_str:
         return True, None
-
-    return False, f"Exam status is '{exam['status']}'. Bookings are closed."
+    elif now < start_str:
+        return False, f"Student booking has not opened yet (Opens on {exam['booking_start']})."
+    else:
+        return False, f"Booking deadline passed on {exam['booking_end']}."

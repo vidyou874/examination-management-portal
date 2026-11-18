@@ -3,7 +3,7 @@ from app.database import get_db
 from app.services.exam_service import get_examination_by_id, is_student_booking_allowed
 from app.services.audit_service import log_audit
 
-def book_examination_slot(student_id, examination_id, slot_id, reason="Student self-booking"):
+def book_examination_slot(student_id, examination_id, slot_id, reason="Student self-booking", bypass_window_check=False):
     """
     Atomically books a slot for a student ensuring capacity and duplicate booking constraints.
     Returns (booking_id, error_message).
@@ -20,10 +20,11 @@ def book_examination_slot(student_id, examination_id, slot_id, reason="Student s
             cursor.execute("ROLLBACK;")
             return None, "Examination not found."
 
-        allowed, msg = is_student_booking_allowed(exam)
-        if not allowed:
-            cursor.execute("ROLLBACK;")
-            return None, msg
+        if not bypass_window_check:
+            allowed, msg = is_student_booking_allowed(exam)
+            if not allowed:
+                cursor.execute("ROLLBACK;")
+                return None, msg
 
         # 2. Check duplicate active booking for this exam
         existing_booking = cursor.execute(
