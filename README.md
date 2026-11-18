@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Examination Management Portal (EMP)
 
 An enterprise-grade, role-based academic examination management web application developed with **Python Flask**, **SQLite**, **Jinja2**, and **Bootstrap 5**. EMP streamlines examination scheduling, faculty slot assignment, duplicate-proof student booking, rubric-based evaluation, result publication, and audit tracking.
@@ -206,12 +205,10 @@ pytest -v tests/
 
 In accordance with Section 12 of the Examination Management Portal Product Requirements Document (PRD):
 
-* **Extent of Assistance:** AI assistance (Antigravity Assistant, Google DeepMind) was utilized during the project lifecycle for:
+* **Extent of Assistance:** AI assistance (Antigravity Assistant, ChatGPT) was utilized during the project lifecycle for:
   - Drafting and refining database schema definitions and foreign key constraints in `app/schema.sql`.
   - Scaffolding the Flask application factory, service layers, and Jinja2 Bootstrap 5 templates.
   - Designing parameterized unit and concurrency test cases in `pytest`.
   - Formulating transactional queries for capacity checking and duplicate booking prevention.
 * **Student Understanding:** All architectural decisions, SQLite transactions, role-based decorators, weighted rubric calculations, and business rules were thoroughly reviewed, tested, and validated to ensure complete understanding and readiness for defense during the viva examination.
-=======
-# examination-management-portal
->>>>>>> 85871994136ab4f7cb11579c886981d7a4adcdaf
+
